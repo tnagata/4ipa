@@ -1,0 +1,22 @@
+name: CemaApp
+options:
+  bundleIdPrefix: com.qapro
+  minimumXcodeVersion: "15.0"
+targets:
+  CemaApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - CemaApp
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.qapro.cema
+      INFOPLIST_FILE: CemaApp/Info.plist
+      MARKETING_VERSION: "1.0"
+      CURRENT_PROJECT_VERSION: "1"
+      # 未署名（Unsigned）でビルドできるようにするための設定
+      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGN_IDENTITY: ""
+      PROVISIONING_PROFILE_SPECIFIER: ""
+      DEVELOPMENT_TEAM: ""
