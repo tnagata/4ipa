@@ -1,0 +1,51 @@
+name: Build iOS IPA from SPM
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Binary
+        run: |
+          xcodebuild -scheme CemaTool4iOS \
+               -sdk iphoneos \
+               -destination 'generic/platform=iOS' \
+               build
+
+
+      - name: Package App Bundle
+        run: |
+          # 1. Payloadフォルダと.appフォルダを作成
+          mkdir -p Payload/CemaTool4iOS.app
+
+          # 2. ビルドされたバイナリをコピー
+          # .build/arm64-apple-ios/release/ のパスは環境により微変動します
+          cp .build/arm64-apple-ios/release/CemaTool4iOS Payload/CemaTool4iOS.app/CemaTool4iOS
+
+          # 3. 設定ファイルとリソースをコピー
+          cp Info.plist Payload/CemaTool4iOS.app/Info.plist
+          cp Sources/CemaTool4iOS/cema_data.json Payload/CemaTool4iOS.app/cema_data.json
+
+          # (重要) .appフォルダに権限を与える
+          chmod -R 755 Payload/CemaTool4iOS.app
+
+      - name: Create IPA
+        run: |
+          # Payloadフォルダをzip圧縮してipaにする
+          #zip -r CemaTool4iOS.ipa Payload
+          rm -rf dummy
+          mkdir dummy
+          zip -r dummy/CemaTool4iOS.ipa Payload
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-ipa
+          path: dummy/
