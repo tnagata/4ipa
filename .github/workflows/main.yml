@@ -1,4 +1,4 @@
-name: Build iOS IPA from SPM
+name: Build iOS IPA
 
 on:
   push:
@@ -8,41 +8,48 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Build Binary
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project for macOS runner
+        run: xcodegen generate
+
+      - name: Build unsigned app on macOS runner
         run: |
-          xcodebuild -scheme CemaTool4iOS \
-               -sdk iphoneos \
-               -destination 'generic/platform=iOS' \
-               build
+          xcodebuild -project CemaApp.xcodeproj \
+            -scheme CemaApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=\"\" \
+            PROVISIONING_PROFILE_SPECIFIER=\"\" \
+            DEVELOPMENT_TEAM=\"\"
 
-
-      - name: Package App Bundle
+      - name: Package IPA
         run: |
-          # 1. Payloadフォルダと.appフォルダを作成
-          mkdir -p Payload/CemaTool4iOS.app
+          set -e
 
-          # 2. ビルドされたバイナリをコピー
-          # .build/arm64-apple-ios/release/ のパスは環境により微変動します
-          cp .build/arm64-apple-ios/release/CemaTool4iOS Payload/CemaTool4iOS.app/CemaTool4iOS
+          APP_PATH=$(find build/DerivedData -name 'CemaApp.app' -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo 'Built app bundle was not found.'
+            exit 1
+          fi
 
-          # 3. 設定ファイルとリソースをコピー
-          cp Info.plist Payload/CemaTool4iOS.app/Info.plist
-          cp Sources/CemaTool4iOS/cema_data.json Payload/CemaTool4iOS.app/cema_data.json
+          rm -rf Payload dummy
+          mkdir -p Payload dummy
+          cp -R "$APP_PATH" Payload/
+          chmod -R 755 Payload/CemaApp.app
 
-          # (重要) .appフォルダに権限を与える
-          chmod -R 755 Payload/CemaTool4iOS.app
-
-      - name: Create IPA
-        run: |
-          # Payloadフォルダをzip圧縮してipaにする
-          #zip -r CemaTool4iOS.ipa Payload
-          rm -rf dummy
-          mkdir dummy
-          zip -r dummy/CemaTool4iOS.ipa Payload
+          (cd Payload && zip -r ../dummy/CemaApp.ipa .)
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
