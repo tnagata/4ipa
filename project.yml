@@ -9,8 +9,12 @@ targets:
     deploymentTarget: "15.0"
     sources:
       - CemaApp
+    resources:
+      - CemaApp/Assets.xcassets
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.qapro.cema
+      PRODUCT_NAME: CemaTool
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       INFOPLIST_FILE: CemaApp/Info.plist
       MARKETING_VERSION: "1.0"
       CURRENT_PROJECT_VERSION: "1"
