@@ -19,29 +19,29 @@ jobs:
       - name: Generate Xcode project for macOS runner
         run: xcodegen generate
 
-      - name: Build unsigned app archive on macOS runner
+      - name: Build unsigned app on macOS runner
         run: |
           xcodebuild -project CemaApp.xcodeproj \
             -scheme CemaApp \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath build/CemaApp.xcarchive \
-            archive \
+            -derivedDataPath build/DerivedData \
+            build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=\"\" \
             PROVISIONING_PROFILE_SPECIFIER=\"\" \
             DEVELOPMENT_TEAM=\"\"
 
-      - name: Package IPA from Xcode archive
+      - name: Package IPA and show archive contents
         run: |
           set -e
 
-          echo '=== Finding archived app bundle ==='
-          APP_PATH="build/CemaApp.xcarchive/Products/Applications/CemaApp.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo 'Archived app bundle was not found.'
+          echo '=== Finding built app bundle ==='
+          APP_PATH=$(find build/DerivedData -name '*.app' -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo 'Built app bundle was not found.'
             exit 1
           fi
 
@@ -58,21 +58,7 @@ jobs:
           find Payload -maxdepth 3 -print | sort
 
           echo '=== Creating IPA archive ==='
-          python3 - <<'PY'
-from pathlib import Path
-import zipfile
-
-payload_dir = Path('Payload')
-ipa_path = Path('dummy/CemaApp.ipa')
-ipa_path.parent.mkdir(parents=True, exist_ok=True)
-
-with zipfile.ZipFile(ipa_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-    for path in sorted(payload_dir.rglob('*')):
-        if path.is_file():
-            zf.write(path, path.as_posix())
-
-print(f'Created {ipa_path}')
-PY
+          (cd . && zip -qr dummy/CemaApp.ipa Payload)
 
           echo '=== IPA archive contents ==='
           unzip -l dummy/CemaApp.ipa
