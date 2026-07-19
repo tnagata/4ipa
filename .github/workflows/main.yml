@@ -34,28 +34,33 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER=\"\" \
             DEVELOPMENT_TEAM=\"\"
 
-      - name: Package IPA
+      - name: Package IPA and show archive contents
         run: |
           set -e
 
+          echo '=== Finding built app bundle ==='
           APP_PATH=$(find build/DerivedData -name '*.app' -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo 'Built app bundle was not found.'
             exit 1
           fi
 
+          echo "Using app bundle: $APP_PATH"
+
           APP_NAME=$(basename "$APP_PATH")
           rm -rf Payload dummy
           mkdir -p Payload dummy
-          cp -R "$APP_PATH" "Payload/$APP_NAME"
+          mkdir -p "Payload/$APP_NAME"
+          cp -R "$APP_PATH"/. "Payload/$APP_NAME/"
           chmod -R 755 "Payload/$APP_NAME"
 
-          echo 'Payload contents:'
+          echo '=== Payload contents ==='
           find Payload -maxdepth 3 -print | sort
 
-          (cd . && zip -r dummy/CemaApp.ipa Payload)
+          echo '=== Creating IPA archive ==='
+          (cd . && zip -qr dummy/CemaApp.ipa Payload)
 
-          echo 'IPA archive contents:'
+          echo '=== IPA archive contents ==='
           unzip -l dummy/CemaApp.ipa
 
       - name: Upload Artifact
