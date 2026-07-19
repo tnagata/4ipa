@@ -35,35 +35,64 @@ struct ContentView: View {
     let cemaData = loadCemaData()
     
     var body: some View {
-        Group {
-            switch currentScreen {
-            case 0:
-                DisclaimerView(
-                    onAgree: { currentScreen = 1 },
-                    onDisagree: {
-                        // アプリを終了させる（iOSの一般的な終了処理）
-                        exit(0)
-                    }
-                )
-            case 1:
-                EvaluationView(
-                    questions: cemaData.questions,
-                    answers: $answers,
-                    onNavigateToResult: { currentScreen = 2 }
-                )
-            case 2:
-                ResultView(
-                    cemaData: cemaData,
-                    answers: answers,
-                    onReset: {
-                        answers.removeAll()
-                        currentScreen = 1
-                    }
-                )
-            default:
-                DisclaimerView(onAgree: { currentScreen = 1 }, onDisagree: { exit(0) })
+        ZStack(alignment: .topTrailing) {
+            Group {
+                switch currentScreen {
+                case 0:
+                    DisclaimerView(
+                        onAgree: { currentScreen = 1 },
+                        onDisagree: {
+                            exitApp()
+                        }
+                    )
+                case 1:
+                    EvaluationView(
+                        questions: cemaData.questions,
+                        answers: $answers,
+                        onNavigateToResult: { currentScreen = 2 }
+                    )
+                case 2:
+                    ResultView(
+                        cemaData: cemaData,
+                        answers: answers,
+                        onReset: {
+                            answers.removeAll()
+                            currentScreen = 1
+                        }
+                    )
+                default:
+                    DisclaimerView(onAgree: { currentScreen = 1 }, onDisagree: { exitApp() })
+                }
             }
+
+            Button(action: exitApp) {
+                HStack(spacing: 6) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("終了")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color(red: 0.95, green: 0.28, blue: 0.28), Color(red: 0.78, green: 0.16, blue: 0.16)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .cornerRadius(999)
+                .shadow(color: Color.black.opacity(0.18), radius: 4, x: 0, y: 2)
+            }
+            .padding(.top, 10)
+            .padding(.trailing, 14)
+            .zIndex(1)
         }
+    }
+
+    private func exitApp() {
+        exit(0)
     }
 }
 
